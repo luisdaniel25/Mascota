@@ -4,7 +4,7 @@ package controlador;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.*;
 
-// DAO y modelo para obtener los datos de la base de datos
+// DAO y modelo
 import dao.MascotaDAO;
 import modelo.Mascota;
 
@@ -18,11 +18,11 @@ import jakarta.mail.util.ByteArrayDataSource;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 
-// Librerías de Java estándar
+// Librerías estándar de Java
 import java.io.*;
 import java.util.*;
 
-@WebServlet("/enviarEmail") // URL con la que se llama a este servlet
+@WebServlet("/enviarEmail") // URL para acceder al servlet
 public class EmailMascotasServlet extends HttpServlet {
 
     // DAO para consultar mascotas
@@ -30,35 +30,34 @@ public class EmailMascotasServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        // --- Datos de configuración del correo ---
-        String remitente = "tapiasdaniel44@gmail.com"; // tu correo
-        String clave = "jmsy ufib pqzt hyzj";                 // clave de aplicación de Gmail
-        String destino = req.getParameter("correo");  // correo del receptor 
+        // Datos del correo
+        String remitente = "tapiasdaniel44@gmail.com"; // correo de envío
+        String clave = "jmsy ufib pqzt hyzj";         // clave de aplicación Gmail
+        String destino = req.getParameter("correo");   // correo receptor desde formulario
 
-        // --- Configuración del servidor SMTP de Gmail ---
+        // Configuración del servidor SMTP de Gmail
         Properties props = new Properties();
-        props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.smtp.host", "smtp.gmail.com");
-        props.put("mail.smtp.port", "587");
+        props.put("mail.smtp.auth", "true"); // requiere autenticación
+        props.put("mail.smtp.starttls.enable", "true"); // usa TLS
+        props.put("mail.smtp.host", "smtp.gmail.com"); // servidor SMTP
+        props.put("mail.smtp.port", "587"); // puerto TLS
 
-        // --- Autenticación con Gmail ---
-        Session session = Session.getInstance(props,
-                new Authenticator() {
+        // Crear sesión con autenticación
+        Session session = Session.getInstance(props, new Authenticator() {
             protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(remitente, clave);
+                return new PasswordAuthentication(remitente, clave); // usuario y clave
             }
         });
 
         try {
-            // ================================
-            //  Generar PDF con lista mascotas
-            // ================================
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+            // GENERAR PDF CON LISTA MASCOTAS
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(); // PDF en memoria
             Document doc = new Document();
             PdfWriter.getInstance(doc, baos);
             doc.open();
-            // Título bonito
+
+            // Título del PDF
             Paragraph titulo = new Paragraph(
                     " Reporte de Mascotas Registradas ",
                     FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18, BaseColor.BLUE)
@@ -66,14 +65,15 @@ public class EmailMascotasServlet extends HttpServlet {
             titulo.setAlignment(Element.ALIGN_CENTER);
             titulo.setSpacingAfter(20);
             doc.add(titulo);
-            // Crear tabla con encabezados
+
+            // Crear tabla con 4 columnas
             PdfPTable tabla = new PdfPTable(4);
             tabla.addCell("ID");
             tabla.addCell("Nombre");
             tabla.addCell("Especie");
             tabla.addCell("Edad");
 
-            // Llenar la tabla con datos desde la base
+            // Agregar datos de mascotas a la tabla
             for (Mascota m : dao.listar()) {
                 tabla.addCell(String.valueOf(m.getId()));
                 tabla.addCell(m.getNombre());
@@ -81,39 +81,37 @@ public class EmailMascotasServlet extends HttpServlet {
                 tabla.addCell(String.valueOf(m.getEdad()));
             }
 
-            // Agregar la tabla al documento PDF
+            // Agregar tabla al documento PDF
             doc.add(tabla);
-            doc.close();
+            doc.close(); // cerrar documento
 
-            // El PDF queda en memoria en forma de bytes
+            // Obtener PDF como bytes
             byte[] pdfBytes = baos.toByteArray();
 
-            // ================================
-            // 2. Crear correo electrónico
-            // ================================
+            // CREAR CORREO ELECTRÓNICO
             Message mensaje = new MimeMessage(session);
             mensaje.setFrom(new InternetAddress(remitente)); // remitente
             mensaje.setRecipients(Message.RecipientType.TO, InternetAddress.parse(destino)); // receptor
-            mensaje.setSubject("Reporte de Mascotas"); // asunto del correo
+            mensaje.setSubject("Reporte de Mascotas"); // asunto
 
-            // Crear adjunto con el PDF
+            // Crear adjunto PDF
             MimeBodyPart adjunto = new MimeBodyPart();
             adjunto.setDataHandler(new DataHandler(new ByteArrayDataSource(pdfBytes, "application/pdf")));
             adjunto.setFileName("reporte_mascotas.pdf");
 
-            // El correo tendrá solo el adjunto (sin texto adicional)
+            // Crear contenido del correo (solo adjunto)
             Multipart multipart = new MimeMultipart();
             multipart.addBodyPart(adjunto);
             mensaje.setContent(multipart);
 
-            // ================================
-            // 3. Enviar el correo
-            // ================================
+            // Enviar correo
             Transport.send(mensaje);
 
+            // Confirmación en la respuesta
             resp.getWriter().println("Correo enviado a " + destino);
 
         } catch (Exception e) {
+            // Manejo de errores
             resp.getWriter().println("Error: " + e.getMessage());
         }
     }

@@ -1,45 +1,29 @@
 package util;
-// Paquete donde está esta clase (organiza tu proyecto)
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-/**
- * Clase encargada de gestionar la conexión a la base de datos MySQL.
- * Centraliza la configuración y permite obtener un objeto Connection
- * para que otras clases (DAO, servicios) puedan interactuar con la BD.
- */
 public class Conexion {
 
-    // Constantes con los datos de conexión (se recomienda mover a un archivo de configuración)
-    private static final String URL = "jdbc:mysql://localhost:3306/mascotas"; // Nombre de la BD
-    private static final String USUARIO = "root";                            // Usuario de MySQL
-    private static final String CONTRASENA = "2556229";                       // Contraseña de MySQL
-    private static final String DRIVER = "com.mysql.cj.jdbc.Driver";          // Driver de conexión
+    private static final String URL = "jdbc:mysql://localhost:3306/mascotas";
+    private static final String USUARIO = "root";
+    private static final String CONTRASENA = "2556229";
+    private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
 
-    /**
-     * Método estático para establecer conexión con la base de datos.
-     * @return objeto Connection si la conexión es exitosa, null si falla.
-     */
     public static Connection conectarBD() {
-        Connection conexion = null;
+        Connection conexion = null; // Objeto que contendrá la conexión
 
         try {
-            // Cargar el driver de MySQL
-            Class.forName(DRIVER);
-
-            // Intentar la conexión
-            conexion = DriverManager.getConnection(URL, USUARIO, CONTRASENA);
-
-            // Mensaje de éxito (útil en entornos de prueba, no en producción)
-            System.out.println("✅ Conexión exitosa a la base de datos.");
+            Class.forName(DRIVER); // Cargar el driver de MySQL
+            conexion = DriverManager.getConnection(URL, USUARIO, CONTRASENA); // Intentar conexión
+            System.out.println(" Conexión exitosa a la base de datos."); // Mensaje de éxito
         } catch (ClassNotFoundException e) {
-            System.err.println("❌ Driver JDBC no encontrado: " + e.getMessage());
+            System.err.println(" Driver JDBC no encontrado: " + e.getMessage()); // Error driver
         } catch (SQLException e) {
-            System.err.println("❌ Error al conectar a la base de datos: " + e.getMessage());
+            System.err.println(" Error al conectar a la base de datos: " + e.getMessage()); // Error conexión
         }
 
-        return conexion;
+        return conexion; // Retornar objeto Connection (puede ser null si falla)
     }
 }
